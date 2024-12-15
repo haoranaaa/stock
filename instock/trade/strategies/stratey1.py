@@ -21,9 +21,8 @@ class Strategy(StrategyTemplate):
         # self.clock_engine.register_moment(self.name, after_trading_moment)
 
         # 注册时钟间隔事件, 不在交易阶段也会触发, clock_type == minute_interval
-        minute_interval = 3
-        self.clock_engine.register_interval(minute_interval, trading=True)
-        return
+        minute_interval = 1
+        self.clock_engine.register_interval(minute_interval, trading=False)
 
     def save_position_to_db(self):
         positions = self.user.position
@@ -33,6 +32,9 @@ class Strategy(StrategyTemplate):
         # Convert positions data to English and map columns
         positions_en = [
             {
+                'date':dt.date.today(),
+                'code': p['证券代码'].strip('="'),
+                'name': p['证券名称'],
                 'market': 'Shanghai A-share' if p['交易市场'] == '上海Ａ股' else '深圳 A股',
                 'frozen_quantity': p['冻结数量'],
                 'unit_quantity': p['单位数量'],
@@ -51,24 +53,11 @@ class Strategy(StrategyTemplate):
                 'account': p['股东帐户'].strip('="'),
                 'stock_balance': p['股票余额'],
                 'stock_category': p['股票类别'],
-                'code': p['证券代码'].strip('="'),
-                'name': p['证券名称']
             } for p in positions
         ]
 
         # Convert to DataFrame
         df = pd.DataFrame(positions_en)
-
-        df = pd.DataFrame(positions)
-        data = df.rename(columns={
-            '证券代码': 'code',
-            '证券名称': 'name',
-            '成本价': 'cost_price',
-            '可用余额': 'available_shares',
-            '市价': 'market_price',
-            '市值': 'market_value',
-            '买入冻结' : 'freeze',
-        })
 
         table_name = tbs.TABLE_CN_STOCK_POSITION['name']
         # 删除老数据。
@@ -79,9 +68,8 @@ class Strategy(StrategyTemplate):
         else:
             cols_type = tbs.get_field_types(tbs.TABLE_CN_STOCK_POSITION['columns'])
 
-        df['date'] = dt.date.today()
-        mdb.insert_db_from_df(data, table_name, cols_type, False, "`date`,`code`")
-        self.log.info(f"持仓信息{data}已保存到数据库表 {table_name}")
+        mdb.insert_db_from_df(df, table_name, cols_type, False, "`date`,`code`")
+        self.log.info(f"持仓信息{df}已保存到数据库表 {table_name}")
 
     def save_account_to_db(self):
         balance = self.user.balance
@@ -90,13 +78,10 @@ class Strategy(StrategyTemplate):
             return
         df = pd.DataFrame([balance])
         data = df.rename(columns={
-            '参考市值': 'market_cap',
-            '可用资金': 'available_funds',
-            '币种': 'cost_price',
+            '可取金额': 'market_cap',
+            '可用金额': 'available_funds',
             '总资产': 'total_assets',
-            '股份参考盈亏': 'profit_loss',
             '资金余额': 'balance',
-            '资金帐号': 'account_id',
         })
 
         table_name = tbs.TABLE_CN_STOCK_ACCOUNT['name']
@@ -114,8 +99,8 @@ class Strategy(StrategyTemplate):
 
     def clock(self, event):
         """在交易时间会定时推送 clock 事件"""
-        self.save_account_to_db()
-        self.save_position_to_db()
+        # self.save_account_to_db()
+        # self.save_position_to_db()
 
     def log_handler(self):
         """自定义 log 记录方式"""

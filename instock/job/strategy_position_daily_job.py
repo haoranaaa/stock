@@ -13,6 +13,7 @@ cpath_current = os.path.dirname(os.path.dirname(__file__))
 cpath = os.path.abspath(os.path.join(cpath_current, os.pardir))
 sys.path.append(cpath)
 
+
 import instock.core.tablestructure as tbs
 import instock.lib.database as mdb
 import instock.lib.run_template as runt
@@ -29,12 +30,6 @@ def prepare(date, strategy):
         # 获取当前持仓
         positionTableName = tbs.TABLE_CN_STOCK_POSITION['name']
         if not mdb.checkTableIsExist(positionTableName):
-            logging.info(f"Table {positionTableName} does not exist. Creating it.")
-            pdata = pd.DataFrame(data=[['2024-12-09', '603078', '江化微', 18.775,1000, 18.560,18560.0, 0]] , columns=list(tbs.TABLE_CN_STOCK_POSITION['columns']))
-            cols_type = tbs.get_field_types(tbs.TABLE_CN_STOCK_POSITION['columns'])
-            mdb.insert_db_from_df(pdata, positionTableName, cols_type, False, "`date`,`code`")
-            del_sql = f"DELETE FROM `{positionTableName}`"
-            mdb.executeSql(del_sql)
             return
         # 获取当前持仓
         result = mdb.executeSqlFetch(f"SELECT * FROM `{positionTableName}`")
