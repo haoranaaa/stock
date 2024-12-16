@@ -76,14 +76,12 @@ class Strategy(StrategyTemplate):
                 pass
 
     def get_stocks_to_sell(self) -> List[Tuple[str, float, int]]:
-
         date_str = trd.get_trade_date_last()
-
-        tb = tbs.TABLE_CN_STOCK_SELL_DATA
+        tb = tbs.TABLE_CN_STOCK_SELL_DATA['name']
         if not mdb.checkTableIsExist(tb):
             return []
         fetch = mdb.executeSqlFetch(
-            f"SELECT * FROM `{tb['name']}` WHERE `date`='{date_str}'")
+            f"SELECT * FROM `{tb}` WHERE `date`='{date_str}'")
         pd_result = pd.DataFrame(fetch, columns=list(tbs.TABLE_CN_STOCK_BUY_DATA['columns']))
 
         if pd_result.empty:
@@ -93,14 +91,13 @@ class Strategy(StrategyTemplate):
         if frame.empty:
             return []
         result = []
-        for ps in frame.values:
-            amount = ps['可用余额']
-            for value in pd_result.values:
-                if (ps['证券代码'].strip('="')) == value['code']:
-                    price = real_sanpshot.get_real_time_quote(value['code'])
-                    if price is None:
-                        price = value['open']
-                    result.append([value['code'], price, amount])
+        merged_df = pd.merge(frame, pd_result, left_on='证券代码', right_on='code', how='inner')
+        for index, row in merged_df.iterrows():
+            amount = row['可用余额']
+            price = real_sanpshot.get_real_time_quote(row['code'])
+            if price is None:
+                price = row['open']
+            result.append([row['code'], price, amount])
         return result
 
     def sell_strategy(self):
