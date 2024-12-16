@@ -18,3 +18,4 @@ python_dateutil==2.9.0.post0
 backtrader~=1.9.78.123
 matplotlib~=3.9.3
 python-dateutil~=2.9.0.post0
+easyquotation~=0.7.5
