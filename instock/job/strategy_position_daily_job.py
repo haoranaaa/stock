@@ -89,12 +89,12 @@ def prepare(date, strategy):
                 if date_value == date_key:  # 如果日期匹配
                     # 使用字典解包简化行数据的创建
                     row = {
+                        'date': date_value,
+                        'code': code,
+                        'name': name,
                         **{k: value[k][i] for k in
                            ['open', 'close', 'low', 'volume', 'amount', 'amplitude', 'high', 'quote_change',
                             'ups_downs', 'turnover', 'p_change']},
-                        'date': date_value,
-                        'code': code,
-                        'name': name
                     }
                     df_list.append(row)  # 添加到列表中
         df = pd.DataFrame(df_list)
